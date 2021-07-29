@@ -1,0 +1,21 @@
+[submodule "lib/utf8_decoder"]
+	path = lib/utf8_decoder
+	url = https://github.com/PierrePharel/utf8_decoder.git
+[submodule "lib/std"]
+	path = lib/std
+	url = https://github.com/ArkScript-lang/std.git
+[submodule "lib/modules"]
+	path = lib/modules
+	url = https://github.com/ArkScript-lang/modules.git
+[submodule "lib/String"]
+	path = lib/String
+	url = https://github.com/ArkScript-lang/String.git
+[submodule "lib/clipp"]
+	path = lib/clipp
+	url = https://github.com/muellan/clipp.git
+[submodule "lib/picosha2"]
+	path = lib/picosha2
+	url = https://github.com/okdshin/PicoSHA2.git
+[submodule "lib/termcolor"]
+	path = lib/termcolor
+	url = https://github.com/ikalnytskyi/termcolor.git
