@@ -1,12 +1,6 @@
-[submodule "modules"]
-	path = lib/ext
-	url = https://github.com/ArkScript-lang/modules
 [submodule "submodules/String"]
 	path = submodules/String
 	url = https://github.com/ArkScript-lang/String.git
-[submodule "lib/std"]
-	path = lib/std
-	url = https://github.com/ArkScript-lang/std.git
 [submodule "submodules/replxx"]
 	path = submodules/replxx
 	url = https://github.com/AmokHuginnsson/replxx.git
