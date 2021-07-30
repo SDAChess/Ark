@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.8)
 
 project(ark CXX)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CMAKE_COMPILER_IS_CLANG ON)
-endif()
+# VERSION
+set(ARK_VERSION_MAJOR 3)
+set(ARK_VERSION_MINOR 1)
+set(ARK_VERSION_PATCH 0)
 
 # setting up compilations options
 
@@ -19,11 +20,52 @@ elseif (MSVC)
 
     add_compile_options(/wd4267)  # disable warning about data loss (size_t -> int)
     add_compile_options(/wd4244)  # disable warning about data loss (size_t -> char)
-elseif (CMAKE_COMPILER_IS_CLANG)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set_property(GLOBAL PROPERTY ArkDebugFlags "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set_property(GLOBAL PROPERTY ArkReleaseFlags "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set_property(GLOBAL PROPERTY ArkLinkerFlags "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
+
+# files needed for the library ArkReactor
+file(GLOB_RECURSE SOURCE_FILES
+    ${ark_SOURCE_DIR}/src/arkreactor/*.cpp
+)
+
+add_library(ArkReactor
+    SHARED
+    ${SOURCE_FILES}
+)
+
+
+# Adds variant header project to includes.
+target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/variant/")
+
+# Adds utf8_decoder header project to includes.
+target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/utf8_decoder/")
+
+
+# Adds picosha2 header project to includes.
+target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/picosha2/")
+
+# Adds String source project for static linking
+add_subdirectory("${ark_SOURCE_DIR}/lib/termcolor")
+# Links to the target ArkReactor
+target_link_libraries(ArkReactor PUBLIC termcolor)
+
+# Adds String source project for static linking
+add_subdirectory("${ark_SOURCE_DIR}/lib/String")
+# Links to the target ArkReactor
+target_link_libraries(ArkReactor PUBLIC ArkScriptString)
+
+# setting up project properties
+
+set_target_properties(
+    ArkReactor
+    PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+)
+
 
 # set debug compilation flags
 get_property(DebugFlags GLOBAL PROPERTY ArkDebugFlags)
@@ -45,18 +87,7 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# submodules
-add_subdirectory("${ark_SOURCE_DIR}/submodules/String")
-# replxx
-add_subdirectory("${ark_SOURCE_DIR}/submodules/replxx")
-set(REPLXX_INCLUDE_DIR "${ark_SOURCE_DIR}/submodules/replxx/include")
-
 # configuring Constants.hpp
-
-# VERSION
-set(ARK_VERSION_MAJOR 3)
-set(ARK_VERSION_MINOR 1)
-set(ARK_VERSION_PATCH 0)
 
 message(STATUS "ArkScript version ${ARK_VERSION_MAJOR}.${ARK_VERSION_MINOR}.${ARK_VERSION_PATCH}")
 if (ARK_PROFILER)
@@ -93,35 +124,13 @@ if (ARK_BUILD_MODULES)
     add_subdirectory(${ark_SOURCE_DIR}/lib/ext)
 endif()
 
-configure_file(
-    ${ark_SOURCE_DIR}/include/Ark/Constants.hpp.in
-    ${ark_SOURCE_DIR}/include/Ark/Constants.hpp
-)
 
-# files needed for the library ArkReactor
-file(GLOB_RECURSE SOURCE_FILES
-    ${ark_SOURCE_DIR}/src/Builtins/*.cpp
-    ${ark_SOURCE_DIR}/src/Compiler/*.cpp
-    ${ark_SOURCE_DIR}/src/Parser/*.cpp
-    ${ark_SOURCE_DIR}/src/VM/*.cpp
-)
-list(APPEND SOURCE_FILES
-    ${ark_SOURCE_DIR}/src/Ark.cpp
-    ${ark_SOURCE_DIR}/src/Utils.cpp
-)
-
-add_library(ArkReactor
-    STATIC
-        ${SOURCE_FILES}
-        ${STRING_SOURCES}
-)
 
 # including content of project
 
 target_include_directories(ArkReactor
     PUBLIC
         ${ark_SOURCE_DIR}/include
-        ${ark_SOURCE_DIR}/thirdparties
         ${STRING_INCLUDES}
 )
 
@@ -151,54 +160,8 @@ if (ARK_PROFILER)
     target_link_libraries(ArkReactor PUBLIC ${COZ_LIBRARY})
 endif()
 
-# setting up project properties
 
-set_target_properties(
-    ArkReactor
-    PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
+configure_file(
+    ${ark_SOURCE_DIR}/include/Ark/Constants.hpp.in
+    ${ark_SOURCE_DIR}/include/Ark/Constants.hpp
 )
-
-# building exe
-
-if (ARK_BUILD_EXE)
-    # additional files needed for the exe (repl, command line and stuff)
-    set(EXE_SOURCES
-        ${ark_SOURCE_DIR}/src/REPL/replxx/Util.cpp
-        ${ark_SOURCE_DIR}/src/REPL/Repl.cpp
-        ${ark_SOURCE_DIR}/src/main.cpp
-    )
-
-    include_directories(${REPLXX_INCLUDE_DIR})
-    add_executable(ark ${EXE_SOURCES})
-    target_include_directories(ark PUBLIC
-        ${ark_SOURCE_DIR}/include
-        ${ark_SOURCE_DIR}/thirdparties
-    )
-    target_link_libraries(ark PUBLIC ArkReactor replxx)
-
-    set_target_properties(
-        ark
-        PROPERTIES
-            CXX_STANDARD 17
-            CXX_STANDARD_REQUIRED ON
-            CXX_EXTENSIONS OFF
-    )
-
-    # setting up installation directory
-
-    install(TARGETS ark
-            DESTINATION bin
-            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
-                        GROUP_EXECUTE GROUP_READ
-    )
-    install(DIRECTORY ${ark_SOURCE_DIR}/lib/
-            DESTINATION lib
-            PATTERN "lib/ext" EXCLUDE
-            REGEX ".+\.md$" EXCLUDE
-            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
-                        GROUP_EXECUTE GROUP_READ
-    )
-endif()
