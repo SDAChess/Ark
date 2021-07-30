@@ -7,6 +7,9 @@ set(ARK_VERSION_MAJOR 3)
 set(ARK_VERSION_MINOR 1)
 set(ARK_VERSION_PATCH 0)
 
+# Uses GNU Install directory variables
+include(GNUInstallDirs)
+
 # setting up compilations options
 
 if (CMAKE_COMPILER_IS_GNUCXX)
@@ -79,11 +82,22 @@ set_target_properties(
         CXX_STANDARD_REQUIRED ON
 )
 
+# Installs the dynamic library file.
 install(TARGETS ArkReactor
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(DIRECTORY ${ark_SOURCE_DIR}/include
+# Install header files
+install(DIRECTORY ${ark_SOURCE_DIR}/include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# Install the standard library
+if(NOT ARK_NO_STD)
+    install(DIRECTORY ${ark_SOURCE_DIR}/lib/std/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/Ark/std
+        FILES_MATCHING PATTERN "*.ark"
+        PATTERN "std/tests" EXCLUDE
+        PATTERN "std/.github" EXCLUDE)
+endif()
 
 
 # set debug compilation flags
@@ -116,13 +130,14 @@ endif()
 set(ARK_COMPILATION_OPTIONS ${CMAKE_CXX_FLAGS})
 set(ARK_COMPILER            ${CMAKE_CXX_COMPILER_ID})
 
-set(ARK_BUILD_EXE       Off CACHE BOOL "Bu
-ild a standalone ark executable")
+set(ARK_BUILD_EXE       Off CACHE BOOL "Build a standalone ark executable")
 set(ARK_ENABLE_SYSTEM   On  CACHE BOOL "Enable sys:exec")  # enable use of (sys:exec "command here")
 set(ARK_PROFILER        Off CACHE BOOL "Enable coz profiler")
 set(ARK_PROFILER_COUNT  Off CACHE BOOL "Enable creations/copies/moves counting on the Value")
 set(ARK_SCOPE_DICHOTOMY Off CACHE BOOL "Change the behaviour of the scopes from linear (off) to dichotomic (On)")
+set(ARK_NO_STDLIB       Off CACHE BOOL "Do not install the standard library with the Ark library")
 set(ARK_BUILD_MODULES   Off CACHE BOOL "Build the std library modules or not")
+
 
 if (ARK_SCOPE_DICHOTOMY)
     add_definitions(-DARK_SCOPE_DICHOTOMY)
@@ -192,4 +207,10 @@ if (ARK_BUILD_EXE)
     )
 
     target_link_libraries(arkscript PUBLIC ArkReactor)
+
+
+    # Installs the arkscript executable.
+    install(TARGETS arkscript
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 endif()
