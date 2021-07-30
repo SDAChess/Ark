@@ -4,11 +4,11 @@
 #include <iostream>
 #include <optional>
 
-#include <clipp.hpp>
-#include <termcolor.hpp>
+#include <clipp.h>
+#include <termcolor/termcolor.hpp>
 
 #include <Ark/Ark.hpp>
-#include <Ark/REPL/Repl.hpp>
+#include <REPL/Repl.hpp>
 #include <Ark/Profiling.hpp>
 
 int main(int argc, char** argv)

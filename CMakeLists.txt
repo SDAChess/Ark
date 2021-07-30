@@ -43,7 +43,6 @@ target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/variant/")
 # Adds utf8_decoder header project to includes.
 target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/utf8_decoder/")
 
-
 # Adds picosha2 header project to includes.
 target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/picosha2/")
 
@@ -57,8 +56,21 @@ add_subdirectory("${ark_SOURCE_DIR}/lib/String")
 # Links to the target ArkReactor
 target_link_libraries(ArkReactor PUBLIC ArkScriptString)
 
-# setting up project properties
 
+# coz-profiler
+if (ARK_PROFILER)
+    find_package(coz-profiler REQUIRED PATHS ${ark_SOURCE_DIR}/lib/coz/)
+    target_include_directories(ArkReactor PUBLIC ${COZ_INCLUDE_DIR})
+    target_link_libraries(ArkReactor PUBLIC ${COZ_LIBRARY})
+endif()
+
+# including content of project
+target_include_directories(ArkReactor
+    PUBLIC
+    ${ark_SOURCE_DIR}/include
+)
+
+# setting up project properties
 set_target_properties(
     ArkReactor
     PROPERTIES
@@ -85,10 +97,7 @@ if (LinkerFlags)
     set(CMAKE_EXE_LINKER_FLAGS "${LinkerFlags}" CACHE STRING "Linker options" FORCE)
 endif()
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 # configuring Constants.hpp
-
 message(STATUS "ArkScript version ${ARK_VERSION_MAJOR}.${ARK_VERSION_MINOR}.${ARK_VERSION_PATCH}")
 if (ARK_PROFILER)
     message(STATUS "Coz Profiler is enabled")
@@ -121,43 +130,15 @@ if (ARK_ENABLE_SYSTEM)
 endif()
 if (ARK_BUILD_MODULES)
     # submodules
-    add_subdirectory(${ark_SOURCE_DIR}/lib/ext)
-endif()
-
-
-
-# including content of project
-
-target_include_directories(ArkReactor
-    PUBLIC
-        ${ark_SOURCE_DIR}/include
-        ${STRING_INCLUDES}
-)
-
-# include the profiler on demand
-if (ARK_PROFILER)
-    target_include_directories(ArkReactor PUBLIC ${Ark_SOURCE_DIR}/submodules/coz/include)
+    add_subdirectory(${ark_SOURCE_DIR}/lib/modules)
 endif()
 
 # linking libraries
-
 find_package(Threads)
 
 if (UNIX OR LINUX)
-    if (CMAKE_COMPILER_IS_GNUCXX)
-        target_link_libraries(ArkReactor PUBLIC stdc++fs)
-    elseif (CMAKE_COMPILER_IS_CLANG)
-        target_link_libraries(ArkReactor PUBLIC stdc++fs)
-    endif()
-
+    target_link_libraries(ArkReactor PUBLIC stdc++fs)
     target_link_libraries(ArkReactor PUBLIC ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-endif()
-
-# coz-profiler
-if (ARK_PROFILER)
-    find_package(coz-profiler REQUIRED PATHS ${Ark_SOURCE_DIR}/submodules/coz/)
-    target_include_directories(ArkReactor PUBLIC ${COZ_INCLUDE_DIR})
-    target_link_libraries(ArkReactor PUBLIC ${COZ_LIBRARY})
 endif()
 
 
@@ -165,3 +146,42 @@ configure_file(
     ${ark_SOURCE_DIR}/include/Ark/Constants.hpp.in
     ${ark_SOURCE_DIR}/include/Ark/Constants.hpp
 )
+
+if (ARK_BUILD_EXE)
+
+
+    # additional files needed for the exe (repl, command line and stuff)
+    set(EXE_SOURCES
+        ${ark_SOURCE_DIR}/src/arkscript/REPL/Util.cpp
+        ${ark_SOURCE_DIR}/src/arkscript/REPL/Repl.cpp
+        ${ark_SOURCE_DIR}/src/arkscript/main.cpp
+    )
+
+    add_executable (arkscript ${EXE_SOURCES})
+
+    # Adds String source project for static linking
+    add_subdirectory("${ark_SOURCE_DIR}/lib/replxx")
+    # Links to the target ArkReactor
+    target_link_libraries(arkscript PUBLIC replxx)
+
+    target_include_directories(arkscript PUBLIC "${ark_SOURCE_DIR}/src/arkscript/")
+
+    # Adds clipp source project for static linking
+    add_subdirectory("${ark_SOURCE_DIR}/lib/clipp")
+    # Links to the target arkscript
+    target_link_libraries(arkscript PUBLIC clipp)
+
+
+    # Links to the target arkscript
+    target_link_libraries(arkscript PUBLIC termcolor)
+
+    set_target_properties(
+        arkscript
+        PROPERTIES
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF
+    )
+
+    target_link_libraries(arkscript PUBLIC ArkReactor replxx)
+endif()
