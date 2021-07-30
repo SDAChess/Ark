@@ -47,12 +47,12 @@ target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/utf8_decoder
 target_include_directories(ArkReactor PUBLIC "${ark_SOURCE_DIR}/lib/picosha2/")
 
 # Adds String source project for static linking
-add_subdirectory("${ark_SOURCE_DIR}/lib/termcolor")
+add_subdirectory("${ark_SOURCE_DIR}/lib/termcolor" EXCLUDE_FROM_ALL)
 # Links to the target ArkReactor
 target_link_libraries(ArkReactor PUBLIC termcolor)
 
 # Adds String source project for static linking
-add_subdirectory("${ark_SOURCE_DIR}/lib/String")
+add_subdirectory("${ark_SOURCE_DIR}/lib/String" EXCLUDE_FROM_ALL)
 # Links to the target ArkReactor
 target_link_libraries(ArkReactor PUBLIC ArkScriptString)
 
@@ -64,11 +64,12 @@ if (ARK_PROFILER)
     target_link_libraries(ArkReactor PUBLIC ${COZ_LIBRARY})
 endif()
 
+
 # including content of project
 target_include_directories(ArkReactor
     PUBLIC
     ${ark_SOURCE_DIR}/include
-)
+    )
 
 # setting up project properties
 set_target_properties(
@@ -77,6 +78,12 @@ set_target_properties(
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
 )
+
+install(TARGETS ArkReactor
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY ${ark_SOURCE_DIR}/include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 
 # set debug compilation flags
@@ -109,7 +116,8 @@ endif()
 set(ARK_COMPILATION_OPTIONS ${CMAKE_CXX_FLAGS})
 set(ARK_COMPILER            ${CMAKE_CXX_COMPILER_ID})
 
-set(ARK_BUILD_EXE       Off CACHE BOOL "Build a standalone ark executable")
+set(ARK_BUILD_EXE       Off CACHE BOOL "Bu
+ild a standalone ark executable")
 set(ARK_ENABLE_SYSTEM   On  CACHE BOOL "Enable sys:exec")  # enable use of (sys:exec "command here")
 set(ARK_PROFILER        Off CACHE BOOL "Enable coz profiler")
 set(ARK_PROFILER_COUNT  Off CACHE BOOL "Enable creations/copies/moves counting on the Value")
@@ -160,20 +168,20 @@ if (ARK_BUILD_EXE)
     add_executable (arkscript ${EXE_SOURCES})
 
     # Adds String source project for static linking
-    add_subdirectory("${ark_SOURCE_DIR}/lib/replxx")
+    add_subdirectory("${ark_SOURCE_DIR}/lib/replxx" EXCLUDE_FROM_ALL)
     # Links to the target ArkReactor
     target_link_libraries(arkscript PUBLIC replxx)
 
     target_include_directories(arkscript PUBLIC "${ark_SOURCE_DIR}/src/arkscript/")
 
     # Adds clipp source project for static linking
-    add_subdirectory("${ark_SOURCE_DIR}/lib/clipp")
+    add_subdirectory("${ark_SOURCE_DIR}/lib/clipp" EXCLUDE_FROM_ALL)
     # Links to the target arkscript
     target_link_libraries(arkscript PUBLIC clipp)
 
 
     # Links to the target arkscript
-    target_link_libraries(arkscript PUBLIC termcolor)
+    target_link_libraries(arkscript PRIVATE termcolor)
 
     set_target_properties(
         arkscript
@@ -183,5 +191,5 @@ if (ARK_BUILD_EXE)
             CXX_EXTENSIONS OFF
     )
 
-    target_link_libraries(arkscript PUBLIC ArkReactor replxx)
+    target_link_libraries(arkscript PUBLIC ArkReactor)
 endif()
