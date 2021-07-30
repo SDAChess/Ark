@@ -160,7 +160,6 @@ endif()
 find_package(Threads)
 
 if (UNIX OR LINUX)
-    target_link_libraries(ArkReactor PUBLIC stdc++fs)
     target_link_libraries(ArkReactor PUBLIC ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
